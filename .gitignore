@@ -1,2 +1,2 @@
-# Local-only config files that may contain secrets
+# Local config files that may contain API secrets
 js/api-config.js

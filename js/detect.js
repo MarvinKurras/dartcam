@@ -1,7 +1,6 @@
 // ─── detect.js ─────────────────────────────────────────────────────
 // Roboflow Darts Detection: inferencejs (on-device WebGL) + dartboard visualization
-
-import { InferenceEngine } from 'https://esm.sh/inferencejs';
+// inferencejs is loaded dynamically so failures don't break the rest of the page.
 
 const ROBOFLOW_PUBLISHABLE_KEY = 'rf_DrUUV6Voq7PQZeRCjAHUGyskZsF3'; // publishable — safe for frontend
 const ROBOFLOW_MODEL   = 'darts-gffwp';
@@ -41,6 +40,9 @@ let _inferEngine = null;
 let _workerId    = null;
 
 async function loadModel() {
+  // Dynamic import — if it fails the catch in setup() shows a message,
+  // but the dartboard and button handler are already active.
+  const { InferenceEngine } = await import('https://esm.sh/inferencejs');
   _inferEngine = new InferenceEngine();
   _workerId = await _inferEngine.startWorker(
     ROBOFLOW_MODEL, ROBOFLOW_VERSION, ROBOFLOW_PUBLISHABLE_KEY
