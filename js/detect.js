@@ -1,16 +1,14 @@
 // ─── detect.js ─────────────────────────────────────────────────────
-// Roboflow Darts Detection: inferencejs (on-device WebGL) + dartboard visualization
-// inferencejs is loaded dynamically so failures don't break the rest of the page.
+// Roboflow Darts Detection via inferencejs (on-device WebGL)
+// Uses Publishable Key — safe to commit to GitHub.
 
-const ROBOFLOW_PUBLISHABLE_KEY = 'rf_DrUUV6Voq7PQZeRCjAHUGyskZsF3'; // publishable — safe for frontend
-const ROBOFLOW_MODEL   = 'darts-gffwp';
-const ROBOFLOW_VERSION = 1;
+const ROBOFLOW_PUBLISHABLE_KEY = 'rf_DrUUV6Voq7PQZeRCjAHUGyskZsF3';
+const ROBOFLOW_MODEL           = 'darts-gffwp';
+const ROBOFLOW_VERSION         = 1;
 
-// Dartboard numbers clockwise from top (standard layout)
 const BOARD_NUMS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 
-// ─── Parse dart class name → { label, score, type, number } ─────────
-// darts-gffwp/1 returns classes like: "t19", "d16", "s5", "sb", "db"
+// ─── Parse class name → score info ───────────────────────────────────
 function parseScore(cls) {
   if (cls === 'db') return { label: 'Double Bull', score: 50, type: 'db' };
   if (cls === 'sb') return { label: 'Single Bull', score: 25, type: 'sb' };
@@ -21,12 +19,11 @@ function parseScore(cls) {
   const [, prefix, num] = m;
   const n = parseInt(num, 10);
   const names = { s: 'Single', d: 'Double', t: 'Triple' };
-  const mults = { s: 1, d: 2, t: 3 };
-
+  const mults = { s: 1,       d: 2,        t: 3 };
   return { label: `${names[prefix]} ${n}`, score: mults[prefix] * n, type: prefix, number: n };
 }
 
-// ─── Capture current frame from a video element ──────────────────────
+// ─── Capture frame from video ─────────────────────────────────────────
 function captureFrame(video) {
   const c = document.createElement('canvas');
   c.width  = video.videoWidth  || 640;
@@ -35,20 +32,17 @@ function captureFrame(video) {
   return c;
 }
 
-// ─── inferencejs engine — model loaded once, reused per detection ─────
+// ─── inferencejs model ────────────────────────────────────────────────
 let _inferEngine = null;
 let _workerId    = null;
 
 async function loadModel() {
-  // InferenceEngine is provided by the CDN script in viewer.html
-  // The CDN bundle exposes it as window.inferencejs.InferenceEngine
   _inferEngine = new inferencejs.InferenceEngine();
   _workerId = await _inferEngine.startWorker(
     ROBOFLOW_MODEL, ROBOFLOW_VERSION, ROBOFLOW_PUBLISHABLE_KEY
   );
 }
 
-// Run on-device inference; bbox.x/y from inferencejs are already center coords
 async function detectDarts(frameCanvas) {
   const bmp = await createImageBitmap(frameCanvas);
   const raw = await _inferEngine.infer(_workerId, bmp);
@@ -60,108 +54,63 @@ async function detectDarts(frameCanvas) {
     width:      p.bbox.width,
     height:     p.bbox.height,
   }));
-// ─── POST base64 image to Roboflow hosted API ────────────────────────
-async function detectDartsAPI(frameCanvas) {
-  const b64 = frameCanvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-  const res  = await fetch(ROBOFLOW_URL, {
-    method:  'POST',
-    body:    b64,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    if (res.status === 403) {
-      throw new Error(`API 403: Zugriff verweigert — API-Key oder Modell-ID prüfen`);
-    }
-    throw new Error(`API ${res.status}: ${txt}`);
-  }
-  return res.json();
-}
+}  // ← diese Klammer fehlte vorher
 
-// ─── Draw captured frame with bounding boxes ─────────────────────────
-function drawDetections(outCanvas, predictions, frame, imageInfo) {
+// ─── Draw bounding boxes ──────────────────────────────────────────────
+function drawDetections(outCanvas, predictions, frame) {
   outCanvas.width  = frame.width;
   outCanvas.height = frame.height;
-
   const ctx = outCanvas.getContext('2d');
   ctx.drawImage(frame, 0, 0);
-
-  // Scale predictions from API image space → canvas space
-  const sx = frame.width  / (imageInfo?.width  || frame.width);
-  const sy = frame.height / (imageInfo?.height || frame.height);
 
   const boxColors = { d: '#e74c3c', t: '#3498db', s: '#2ecc71', db: '#f1c40f', sb: '#f39c12' };
 
   predictions.forEach(p => {
     const sc    = parseScore(p.class);
-    const color = boxColors[sc.type] || '#ffffff';
+    const color = boxColors[sc.type] || '#fff';
+    const bx = p.x; const by = p.y; const bw = p.width; const bh = p.height;
 
-    const bx = p.x * sx;
-    const by = p.y * sy;
-    const bw = p.width  * sx;
-    const bh = p.height * sy;
-
-    // Bounding box
     ctx.strokeStyle = color;
     ctx.lineWidth   = 3;
     ctx.strokeRect(bx - bw / 2, by - bh / 2, bw, bh);
 
-    // Label background
     const label = `${sc.label} ${Math.round(p.confidence * 100)}%`;
     ctx.font = 'bold 13px monospace';
     const tw = ctx.measureText(label).width + 10;
     ctx.fillStyle = color;
     ctx.fillRect(bx - bw / 2, by - bh / 2 - 22, tw, 20);
-
-    // Label text
     ctx.fillStyle = '#000';
     ctx.fillText(label, bx - bw / 2 + 5, by - bh / 2 - 6);
   });
 }
 
-// ─── Draw dartboard with detected zones highlighted in gold ──────────
-// Standard dartboard ring proportions (radius relative to outer double ring)
-//   Inner bull (DB):  6.35 mm → 3.7%
-//   Outer bull (SB): 15.9  mm → 9.4%
-//   Triple inner:    99    mm → 58.2%
-//   Triple outer:   107    mm → 62.9%
-//   Double inner:   162    mm → 95.3%
-//   Double outer:   170    mm → 100%
+// ─── Draw dartboard ───────────────────────────────────────────────────
 function drawDartboard(canvas, predictions) {
-  const W  = canvas.width;
-  const H  = canvas.height;
-  const cx = W / 2;
-  const cy = H / 2;
-  const R  = Math.min(W, H) / 2 - 18; // outer edge of double ring
-
+  const W = canvas.width, H = canvas.height;
+  const cx = W / 2, cy = H / 2;
+  const R  = Math.min(W, H) / 2 - 18;
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, W, H);
 
-  const r = { bi: 0.037, bo: 0.094, ti: 0.582, to: 0.629, di: 0.953, do: 1.0 };
-
+  const r   = { bi: 0.037, bo: 0.094, ti: 0.582, to: 0.629, di: 0.953, do: 1.0 };
   const SEG = (2 * Math.PI) / 20;
-  const OFF = -Math.PI / 2 - SEG / 2; // offset so 20 sits at top
-
+  const OFF = -Math.PI / 2 - SEG / 2;
   const detected = new Set(predictions.map(p => p.class));
 
-  // Black surround behind the board
   ctx.beginPath();
   ctx.arc(cx, cy, R * r.do + 16, 0, 2 * Math.PI);
   ctx.fillStyle = '#0a0a0a';
   ctx.fill();
 
-  // ── 20 numbered segments ──────────────────────────────────────────
   for (let i = 0; i < 20; i++) {
     const num  = BOARD_NUMS[i];
     const a1   = OFF + i * SEG;
     const a2   = OFF + (i + 1) * SEG;
     const even = i % 2 === 0;
-
     const base = even ? '#1c1c1c' : '#f0e8d0';
     const ring = even ? '#c0392b' : '#27ae60';
     const gold = '#FFD700';
 
-    // Helper: filled arc slice from inner to outer radius
     const slice = (ri, ro, fill) => {
       ctx.beginPath();
       ctx.arc(cx, cy, ro * R, a1, a2);
@@ -171,85 +120,51 @@ function drawDartboard(canvas, predictions) {
       ctx.fill();
     };
 
-    const isS = detected.has(`s${num}`);
-    const isT = detected.has(`t${num}`);
-    const isD = detected.has(`d${num}`);
+    slice(r.bo, r.ti, detected.has(`s${num}`) ? gold : base);
+    slice(r.ti, r.to, detected.has(`t${num}`) ? gold : ring);
+    slice(r.to, r.di, detected.has(`s${num}`) ? gold : base);
+    slice(r.di, r.do, detected.has(`d${num}`) ? gold : ring);
 
-    slice(r.bo, r.ti, isS ? gold : base);  // single (inner half)
-    slice(r.ti, r.to, isT ? gold : ring);  // triple ring
-    slice(r.to, r.di, isS ? gold : base);  // single (outer half)
-    slice(r.di, r.do, isD ? gold : ring);  // double ring
-
-    // Thin wire line at segment boundary
     ctx.save();
-    ctx.translate(cx, cy);
-    ctx.rotate(a1);
+    ctx.translate(cx, cy); ctx.rotate(a1);
     ctx.beginPath();
-    ctx.moveTo(r.bo * R, 0);
-    ctx.lineTo(r.do * R, 0);
-    ctx.strokeStyle = 'rgba(110,110,110,0.55)';
-    ctx.lineWidth   = 0.9;
-    ctx.stroke();
+    ctx.moveTo(r.bo * R, 0); ctx.lineTo(r.do * R, 0);
+    ctx.strokeStyle = 'rgba(110,110,110,0.55)'; ctx.lineWidth = 0.9; ctx.stroke();
     ctx.restore();
 
-    // Segment number label (outside double ring)
-    const la = a1 + SEG / 2;
-    const lr = r.do + 0.08;
-    ctx.fillStyle    = '#e8e8e8';
-    ctx.font         = `bold ${Math.max(9, Math.floor(R * 0.088))}px Arial`;
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
+    const la = a1 + SEG / 2, lr = r.do + 0.08;
+    ctx.fillStyle = '#e8e8e8';
+    ctx.font = `bold ${Math.max(9, Math.floor(R * 0.088))}px Arial`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(num, cx + Math.cos(la) * lr * R, cy + Math.sin(la) * lr * R);
   }
 
-  // Outer ring of double ring (thin arc line)
-  ctx.beginPath();
-  ctx.arc(cx, cy, r.do * R, 0, 2 * Math.PI);
-  ctx.strokeStyle = 'rgba(110,110,110,0.55)';
-  ctx.lineWidth   = 1;
-  ctx.stroke();
-
-  // ── Bull rings ────────────────────────────────────────────────────
-  // Single bull (green)
-  ctx.beginPath();
-  ctx.arc(cx, cy, r.bo * R, 0, 2 * Math.PI);
-  ctx.fillStyle = detected.has('sb') ? '#FFD700' : '#27ae60';
-  ctx.fill();
-
-  // Double bull / bullseye (red)
-  ctx.beginPath();
-  ctx.arc(cx, cy, r.bi * R, 0, 2 * Math.PI);
-  ctx.fillStyle = detected.has('db') ? '#FFD700' : '#c0392b';
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r.bo * R, 0, 2 * Math.PI);
+  ctx.fillStyle = detected.has('sb') ? '#FFD700' : '#27ae60'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, r.bi * R, 0, 2 * Math.PI);
+  ctx.fillStyle = detected.has('db') ? '#FFD700' : '#c0392b'; ctx.fill();
 }
 
-// ─── Render score list into a container element ──────────────────────
+// ─── Render score list ────────────────────────────────────────────────
 function renderScoreList(container, predictions) {
   if (!predictions.length) {
-    container.innerHTML = '<p class="detect-empty">Keine Darts erkannt</p>';
+    container.innerHTML = '<p style="color:var(--subtext);font-size:0.8rem;">Keine Darts erkannt</p>';
     return;
   }
-
   let total = 0;
   const rows = predictions.map(p => {
     const s = parseScore(p.class);
     total += s.score;
-    return `
-      <div class="score-row">
-        <span class="score-label">${s.label}</span>
-        <span class="score-val">${s.score}</span>
-      </div>`;
-  }).join('');
-
-  container.innerHTML = `
-    ${rows}
-    <div class="score-total">
-      <span>Gesamt</span>
-      <span>${total}</span>
+    return `<div class="score-row">
+      <span class="score-label">${s.label}</span>
+      <span class="score-val">${s.score}</span>
     </div>`;
+  }).join('');
+  container.innerHTML = `${rows}
+    <div class="score-total"><span>Gesamt</span><span>${total}</span></div>`;
 }
 
-// ─── Setup ───────────────────────────────────────────────────────────
+// ─── Setup ────────────────────────────────────────────────────────────
 (function setup() {
   const boardCanvas    = document.getElementById('dartboard-canvas');
   const detectBtn      = document.getElementById('detect-btn');
@@ -259,19 +174,8 @@ function renderScoreList(container, predictions) {
   const scoreList      = document.getElementById('score-list');
   const video          = document.getElementById('stream');
 
-  // Draw empty board immediately — any error is shown in detectStatus
-  if (boardCanvas) {
-    try {
-      drawDartboard(boardCanvas, []);
-    } catch (e) {
-      detectStatus.textContent = 'Brett-Fehler: ' + e.message;
-      console.error('[detect] drawDartboard', e);
-    }
-  } else {
-    detectStatus.textContent = 'Fehler: dartboard-canvas nicht gefunden';
-  }
+  if (boardCanvas) drawDartboard(boardCanvas, []);
 
-  // Button stays ENABLED. Model loads on first click so the button always responds.
   detectBtn.addEventListener('click', async () => {
     if (!video.videoWidth) {
       detectStatus.textContent = 'Kein Stream aktiv — zuerst verbinden.';
@@ -280,14 +184,12 @@ function renderScoreList(container, predictions) {
 
     detectBtn.disabled = true;
 
-    // Load model on first click
     if (!_workerId) {
       detectStatus.textContent = 'Modell wird geladen…';
       try {
         await loadModel();
       } catch (err) {
         detectStatus.textContent = `Ladefehler: ${err.message}`;
-        console.error('[detect] model load', err);
         detectBtn.disabled = false;
         return;
       }
@@ -300,7 +202,7 @@ function renderScoreList(container, predictions) {
       const frame = captureFrame(video);
       const preds = await detectDarts(frame);
 
-      drawDetections(frameCanvas, preds, frame, null);
+      drawDetections(frameCanvas, preds, frame);
       drawDartboard(boardCanvas, preds);
       renderScoreList(scoreList, preds);
       resultsSection.style.display = '';
