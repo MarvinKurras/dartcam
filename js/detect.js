@@ -60,6 +60,22 @@ async function detectDarts(frameCanvas) {
     width:      p.bbox.width,
     height:     p.bbox.height,
   }));
+// ─── POST base64 image to Roboflow hosted API ────────────────────────
+async function detectDartsAPI(frameCanvas) {
+  const b64 = frameCanvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  const res  = await fetch(ROBOFLOW_URL, {
+    method:  'POST',
+    body:    b64,
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    if (res.status === 403) {
+      throw new Error(`API 403: Zugriff verweigert — API-Key oder Modell-ID prüfen`);
+    }
+    throw new Error(`API ${res.status}: ${txt}`);
+  }
+  return res.json();
 }
 
 // ─── Draw captured frame with bounding boxes ─────────────────────────
@@ -235,6 +251,7 @@ function renderScoreList(container, predictions) {
 
 // ─── Setup — runs when module loads ──────────────────────────────────
 (function setup() {
+
   drawDartboard(document.getElementById('dartboard-canvas'), []);
 
   const detectBtn      = document.getElementById('detect-btn');
