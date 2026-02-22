@@ -51,6 +51,9 @@ function connect() {
 
       // iOS Safari fix: needs explicit play()
       ui.stream.play().catch(() => {});
+
+      // Enable dart detection once stream is live
+      initDetection(ui.stream);
     });
 
     call.on('error', (err) => {
