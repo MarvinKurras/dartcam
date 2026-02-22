@@ -45,6 +45,9 @@ async function detectDartsAPI(frameCanvas) {
   });
   if (!res.ok) {
     const txt = await res.text();
+    if (res.status === 403) {
+      throw new Error(`API 403: Zugriff verweigert — API-Key oder Modell-ID prüfen`);
+    }
     throw new Error(`API ${res.status}: ${txt}`);
   }
   return res.json();
@@ -228,6 +231,9 @@ function renderScoreList(container, predictions) {
 
 // ─── Setup — runs immediately when the script loads ──────────────────
 (function setup() {
+  // Draw empty dartboard right away
+  drawDartboard(document.getElementById('dartboard-canvas'), []);
+
   const detectBtn      = document.getElementById('detect-btn');
   const detectStatus   = document.getElementById('detect-status');
   const resultsSection = document.getElementById('results-section');
