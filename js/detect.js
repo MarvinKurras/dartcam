@@ -259,8 +259,17 @@ function renderScoreList(container, predictions) {
   const scoreList      = document.getElementById('score-list');
   const video          = document.getElementById('stream');
 
-  // Draw empty board immediately — no dependency on inferencejs
-  if (boardCanvas) drawDartboard(boardCanvas, []);
+  // Draw empty board immediately — any error is shown in detectStatus
+  if (boardCanvas) {
+    try {
+      drawDartboard(boardCanvas, []);
+    } catch (e) {
+      detectStatus.textContent = 'Brett-Fehler: ' + e.message;
+      console.error('[detect] drawDartboard', e);
+    }
+  } else {
+    detectStatus.textContent = 'Fehler: dartboard-canvas nicht gefunden';
+  }
 
   // Button stays ENABLED. Model loads on first click so the button always responds.
   detectBtn.addEventListener('click', async () => {
