@@ -1,11 +1,11 @@
 // ─── detect.js ─────────────────────────────────────────────────────
-// Roboflow Darts Detection: API call + dartboard visualization
+// Roboflow Darts Detection: inferencejs (on-device WebGL) + dartboard visualization
 
-const ROBOFLOW_API_KEY = '92FofRNR2Rq0Il8YrJXp';
-const ROBOFLOW_MODEL   = 'darts-gffwp/1';
-const ROBOFLOW_URL     =
-  `https://serverless.roboflow.com/${ROBOFLOW_MODEL}` +
-  `?api_key=${ROBOFLOW_API_KEY}&confidence=50&overlap=50`;
+import { InferenceEngine } from 'https://esm.sh/inferencejs';
+
+const ROBOFLOW_PUBLISHABLE_KEY = 'rf_DrUUV6Voq7PQZeRCjAHUGyskZsF3'; // publishable — safe for frontend
+const ROBOFLOW_MODEL   = 'darts-gffwp';
+const ROBOFLOW_VERSION = 1;
 
 // Dartboard numbers clockwise from top (standard layout)
 const BOARD_NUMS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
@@ -36,26 +36,33 @@ function captureFrame(video) {
   return c;
 }
 
-// ─── POST base64 image to Roboflow hosted API ────────────────────────
-async function detectDartsAPI(frameCanvas) {
-  const b64 = frameCanvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-  const res  = await fetch(ROBOFLOW_URL, {
-    method:  'POST',
-    body:    b64,
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error(`API ${res.status}: ${txt}`);
-  }
-  return res.json();
+// ─── inferencejs engine — model loaded once, reused per detection ─────
+let _inferEngine = null;
+let _workerId    = null;
+
+async function loadModel() {
+  _inferEngine = new InferenceEngine();
+  _workerId = await _inferEngine.startWorker(
+    ROBOFLOW_MODEL, ROBOFLOW_VERSION, ROBOFLOW_PUBLISHABLE_KEY
+  );
+}
+
+// Run on-device inference; normalize bbox to center-x/y (matches REST API format)
+async function detectDarts(frameCanvas) {
+  const bmp = await createImageBitmap(frameCanvas);
+  const raw = await _inferEngine.infer(_workerId, bmp);
+  // inferencejs bbox: { x, y } = top-left → convert to center coords
+  return raw.map(p => ({
+    class:      p.class,
+    confidence: p.confidence,
+    x:          p.bbox.x + p.bbox.width  / 2,
+    y:          p.bbox.y + p.bbox.height / 2,
+    width:      p.bbox.width,
+    height:     p.bbox.height,
+  }));
 }
 
 // ─── Draw captured frame with bounding boxes ─────────────────────────
-// outCanvas   = DOM canvas element to draw into
-// predictions = array from Roboflow response
-// frame       = canvas from captureFrame()
-// imageInfo   = result.image { width, height } from API response
 function drawDetections(outCanvas, predictions, frame, imageInfo) {
   outCanvas.width  = frame.width;
   outCanvas.height = frame.height;
@@ -73,7 +80,6 @@ function drawDetections(outCanvas, predictions, frame, imageInfo) {
     const sc    = parseScore(p.class);
     const color = boxColors[sc.type] || '#ffffff';
 
-    // Roboflow: x/y are center coords, width/height are box dims
     const bx = p.x * sx;
     const by = p.y * sy;
     const bw = p.width  * sx;
@@ -227,9 +233,8 @@ function renderScoreList(container, predictions) {
     </div>`;
 }
 
-// ─── Setup — runs immediately when the script loads ──────────────────
+// ─── Setup — runs when module loads ──────────────────────────────────
 (function setup() {
-  // Draw empty board immediately (before any detection)
   drawDartboard(document.getElementById('dartboard-canvas'), []);
 
   const detectBtn      = document.getElementById('detect-btn');
@@ -240,23 +245,34 @@ function renderScoreList(container, predictions) {
   const scoreList      = document.getElementById('score-list');
   const video          = document.getElementById('stream');
 
+  // Load model on startup; button stays disabled until ready
+  detectBtn.disabled       = true;
+  detectStatus.textContent = 'Modell wird geladen…';
+  loadModel()
+    .then(() => {
+      detectBtn.disabled       = false;
+      detectStatus.textContent = '';
+    })
+    .catch(err => {
+      detectStatus.textContent = `Modell-Ladefehler: ${err.message}`;
+      console.error('[detect] model load', err);
+    });
+
   detectBtn.addEventListener('click', async () => {
-    // If no video stream is active, bail out early
     if (!video.videoWidth) {
       detectStatus.textContent = 'Kein Stream aktiv — zuerst verbinden.';
       return;
     }
 
     detectBtn.disabled       = true;
-    detectStatus.textContent = 'Frame wird gesendet...';
+    detectStatus.textContent = 'Frame wird analysiert…';
     resultsSection.style.display = 'none';
 
     try {
-      const frame  = captureFrame(video);
-      const result = await detectDartsAPI(frame);
-      const preds  = result.predictions || [];
+      const frame = captureFrame(video);
+      const preds = await detectDarts(frame);
 
-      drawDetections(frameCanvas, preds, frame, result.image);
+      drawDetections(frameCanvas, preds, frame, null); // predictions in canvas pixel space
       drawDartboard(boardCanvas, preds);
       renderScoreList(scoreList, preds);
 
