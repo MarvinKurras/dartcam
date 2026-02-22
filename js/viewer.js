@@ -47,7 +47,7 @@ function connect() {
       setStatus('connected', 'Stream active');
       ui.stream.srcObject = remoteStream;
       ui.stream.hidden = false;
-      ui.overlay.hidden = true;
+      ui.overlay.style.display = 'none'; // hidden attr doesn't override display:flex in CSS
 
       // iOS Safari fix: needs explicit play()
       ui.stream.play().catch(() => {});
@@ -61,7 +61,7 @@ function connect() {
 
     call.on('close', () => {
       setStatus('error', 'Stream ended.');
-      ui.overlay.hidden = false;
+      ui.overlay.style.display = '';
       ui.stream.hidden = true;
       resetUI();
     });
