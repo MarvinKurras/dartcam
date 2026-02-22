@@ -1,29 +1,23 @@
 // ─── detect.js ─────────────────────────────────────────────────────
 // Roboflow Darts Detection: API call + dartboard visualization
 
-const ROBOFLOW_API_KEY = 'rf_DrUUV6Voq7PQZeRCjAHUGyskZsF3';
-const ROBOFLOW_MODEL   = 'darts-gffwp/1';
+const ROBOFLOW_API_KEY = '92FofRNR2Rq0Il8YrJXp';
+const ROBOFLOW_MODEL   = 'darts-bjj98/2';
 const ROBOFLOW_URL     =
-  `https://detect.roboflow.com/${ROBOFLOW_MODEL}` +
-  `?api_key=${ROBOFLOW_API_KEY}&confidence=40&overlap=30`;
+  `https://serverless.roboflow.com/${ROBOFLOW_MODEL}` +
+  `?api_key=${ROBOFLOW_API_KEY}&confidence=50&overlap=50`;
 
 // Dartboard numbers clockwise from top (standard layout)
 const BOARD_NUMS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 
-// ─── Parse dart class name → { label, score, type } ────────────────
+// ─── Parse dart class name → { label, score, number } ──────────────
+// darts-bjj98/2 returns plain segment numbers as class: "5", "20", …
 function parseScore(cls) {
-  if (cls === 'db') return { label: 'Double Bull', score: 50, type: 'db' };
-  if (cls === 'sb') return { label: 'Single Bull', score: 25, type: 'sb' };
-
-  const m = cls.match(/^([tds])(\d+)$/);
-  if (!m) return { label: cls, score: 0, type: 'unknown' };
-
-  const [, prefix, num] = m;
-  const n = parseInt(num, 10);
-  const names = { s: 'Single', d: 'Double', t: 'Triple' };
-  const mults = { s: 1, d: 2, t: 3 };
-
-  return { label: `${names[prefix]} ${n}`, score: mults[prefix] * n, type: prefix, number: n };
+  const n = parseInt(cls, 10);
+  if (!isNaN(n) && n >= 1 && n <= 20) {
+    return { label: `Segment ${n}`, score: n, number: n };
+  }
+  return { label: cls, score: 0, number: null };
 }
 
 // ─── Capture current frame from a video element ──────────────────────
@@ -66,11 +60,9 @@ function drawDetections(outCanvas, predictions, frame, imageInfo) {
   const sx = frame.width  / (imageInfo?.width  || frame.width);
   const sy = frame.height / (imageInfo?.height || frame.height);
 
-  const boxColors = { d: '#e74c3c', t: '#3498db', s: '#2ecc71', db: '#f1c40f', sb: '#f39c12' };
-
   predictions.forEach(p => {
     const sc    = parseScore(p.class);
-    const color = boxColors[sc.type] || '#ffffff';
+    const color = '#FFD700'; // gold for all darts
 
     // Roboflow: x/y are center coords, width/height are box dims
     const bx = p.x * sx;
@@ -119,7 +111,8 @@ function drawDartboard(canvas, predictions) {
   const SEG = (2 * Math.PI) / 20;
   const OFF = -Math.PI / 2 - SEG / 2; // offset so 20 sits at top
 
-  const detected = new Set(predictions.map(p => p.class));
+  // Set of hit segment numbers (integers)
+  const detected = new Set(predictions.map(p => parseInt(p.class, 10)).filter(n => !isNaN(n)));
 
   // Black surround behind the board
   ctx.beginPath();
@@ -148,14 +141,13 @@ function drawDartboard(canvas, predictions) {
       ctx.fill();
     };
 
-    const isS = detected.has(`s${num}`);
-    const isT = detected.has(`t${num}`);
-    const isD = detected.has(`d${num}`);
+    // New model: class is plain segment number — highlight entire segment
+    const hit = detected.has(num);
 
-    slice(r.bo, r.ti, isS ? gold : base);  // single (inner half)
-    slice(r.ti, r.to, isT ? gold : ring);  // triple ring
-    slice(r.to, r.di, isS ? gold : base);  // single (outer half)
-    slice(r.di, r.do, isD ? gold : ring);  // double ring
+    slice(r.bo, r.ti, hit ? gold : base);  // single (inner half)
+    slice(r.ti, r.to, hit ? gold : ring);  // triple ring
+    slice(r.to, r.di, hit ? gold : base);  // single (outer half)
+    slice(r.di, r.do, hit ? gold : ring);  // double ring
 
     // Thin wire line at segment boundary
     ctx.save();
@@ -190,13 +182,13 @@ function drawDartboard(canvas, predictions) {
   // Single bull (green)
   ctx.beginPath();
   ctx.arc(cx, cy, r.bo * R, 0, 2 * Math.PI);
-  ctx.fillStyle = detected.has('sb') ? '#FFD700' : '#27ae60';
+  ctx.fillStyle = '#27ae60';
   ctx.fill();
 
   // Double bull / bullseye (red)
   ctx.beginPath();
   ctx.arc(cx, cy, r.bi * R, 0, 2 * Math.PI);
-  ctx.fillStyle = detected.has('db') ? '#FFD700' : '#c0392b';
+  ctx.fillStyle = '#c0392b';
   ctx.fill();
 }
 
