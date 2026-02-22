@@ -358,21 +358,16 @@ html, body {
   max-width: 800px;
 }
 
-/* ─── Detection results ───────────────────────────────────── */
+/* ─── Always-visible dartboard ────────────────────────────── */
+.dartboard-section {
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ─── Detection results (frame only) ─────────────────────── */
 .results-section {
   width: 100%;
-  max-width: 960px;
-}
-
-.results-grid {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 1.25rem;
-  align-items: start;
-}
-
-@media (max-width: 680px) {
-  .results-grid { grid-template-columns: 1fr; }
+  max-width: 800px;
 }
 
 .results-col {

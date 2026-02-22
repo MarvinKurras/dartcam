@@ -65,23 +65,20 @@
       <p class="hint" id="detect-status"></p>
     </div>
 
-    <!-- Results (shown after a detection run) -->
+    <!-- Dartboard (always visible) -->
+    <div class="dartboard-section">
+      <div class="results-col">
+        <p class="card-title">Dartboard</p>
+        <canvas id="dartboard-canvas" class="dartboard-canvas" width="320" height="320"></canvas>
+        <div id="score-list" class="score-list"></div>
+      </div>
+    </div>
+
+    <!-- Frame with bounding boxes (shown after a detection run) -->
     <div id="results-section" class="results-section" style="display:none;">
-      <div class="results-grid">
-
-        <!-- Left: captured frame with bounding boxes -->
-        <div class="results-col">
-          <p class="card-title">Erkannter Frame</p>
-          <canvas id="frame-canvas" class="frame-canvas"></canvas>
-        </div>
-
-        <!-- Right: dartboard + score list -->
-        <div class="results-col">
-          <p class="card-title">Dartboard</p>
-          <canvas id="dartboard-canvas" class="dartboard-canvas" width="320" height="320"></canvas>
-          <div id="score-list" class="score-list"></div>
-        </div>
-
+      <div class="results-col">
+        <p class="card-title">Erkannter Frame</p>
+        <canvas id="frame-canvas" class="frame-canvas"></canvas>
       </div>
     </div>
 

@@ -228,6 +228,9 @@ function renderScoreList(container, predictions) {
 
 // ─── Setup — runs immediately when the script loads ──────────────────
 (function setup() {
+  // Draw empty board immediately (before any detection)
+  drawDartboard(document.getElementById('dartboard-canvas'), []);
+
   const detectBtn      = document.getElementById('detect-btn');
   const detectStatus   = document.getElementById('detect-status');
   const resultsSection = document.getElementById('results-section');
