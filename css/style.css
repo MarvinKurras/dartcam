@@ -388,7 +388,7 @@ html, body {
 
 .dartboard-canvas {
   width: 100%;
-  height: auto;
+  aspect-ratio: 1 / 1;
   display: block;
 }
 
