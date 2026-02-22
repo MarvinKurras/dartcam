@@ -1,0 +1,343 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap');
+
+/* ─── Variables ─────────────────────────────────────────── */
+:root {
+  --bg:       #0c0c0c;
+  --surface:  #151515;
+  --border:   #2a2a2a;
+  --red:      #e63946;
+  --green:    #2ec27e;
+  --muted:    #555;
+  --text:     #e8e8e8;
+  --subtext:  #888;
+  --radius:   8px;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+}
+
+/* ─── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Layout ─────────────────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.logo-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 10vw, 6rem);
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: var(--text);
+}
+
+.logo-title span {
+  color: var(--red);
+}
+
+.logo-sub {
+  font-size: 0.7rem;
+  color: var(--subtext);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+
+/* ─── Card ───────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.card-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--subtext);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────── */
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.9rem 1.5rem;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+}
+
+.btn-primary {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+}
+.btn-primary:hover {
+  background: #ff4655;
+  border-color: #ff4655;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(230, 57, 70, 0.35);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-secondary:hover {
+  border-color: var(--text);
+  background: rgba(255,255,255,0.04);
+}
+
+.btn-success {
+  background: var(--green);
+  color: #0c0c0c;
+  border-color: var(--green);
+}
+.btn-success:hover {
+  background: #3dda8e;
+  box-shadow: 0 4px 20px rgba(46, 194, 126, 0.3);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ─── Status Badge ────────────────────────────────────────── */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--subtext);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.status-dot.connecting { background: #f4a261; animation: pulse 1.2s infinite; }
+.status-dot.connected  { background: var(--green); }
+.status-dot.error      { background: var(--red); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+/* ─── Peer ID display ─────────────────────────────────────── */
+.peer-id-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.peer-id-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--subtext);
+}
+
+.peer-id-value {
+  font-size: 1.4rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.15em;
+  color: var(--red);
+  word-break: break-all;
+}
+
+/* ─── Input ───────────────────────────────────────────────── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--subtext);
+}
+
+.input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+  text-transform: uppercase;
+}
+
+.input:focus {
+  border-color: var(--red);
+}
+
+.input::placeholder {
+  color: var(--muted);
+}
+
+/* ─── Video ───────────────────────────────────────────────── */
+.video-wrapper {
+  width: 100%;
+  max-width: 800px;
+  position: relative;
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  aspect-ratio: 16/9;
+}
+
+.video-wrapper video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.video-overlay svg {
+  opacity: 0.3;
+}
+
+/* ─── Home page cards grid ────────────────────────────────── */
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+  max-width: 640px;
+}
+
+@media (max-width: 480px) {
+  .role-grid { grid-template-columns: 1fr; }
+}
+
+.role-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem;
+  text-decoration: none;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.role-card:hover {
+  border-color: var(--red);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(230, 57, 70, 0.15);
+}
+
+.role-card-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.role-card-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.role-card-desc {
+  font-size: 0.7rem;
+  color: var(--subtext);
+  line-height: 1.6;
+}
+
+/* ─── Back link ───────────────────────────────────────────── */
+.back-link {
+  font-size: 0.7rem;
+  color: var(--subtext);
+  text-decoration: none;
+  letter-spacing: 0.15em;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: color 0.15s;
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+.back-link:hover { color: var(--text); }
+
+/* ─── Info text ───────────────────────────────────────────── */
+.hint {
+  font-size: 0.7rem;
+  color: var(--subtext);
+  line-height: 1.6;
+  text-align: center;
+}

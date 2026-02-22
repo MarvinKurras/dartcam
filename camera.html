@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- iOS: prevent sleep while streaming -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>DartCam · Camera</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="page">
+
+    <a href="index.html" class="back-link">← Back</a>
+
+    <div class="logo">
+      <h1 class="logo-title">DART<span>CAM</span></h1>
+      <p class="logo-sub">Camera Mode</p>
+    </div>
+
+    <div class="card">
+      <p class="card-title">📱 iPhone Camera</p>
+
+      <div class="status">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="status-text">Ready to start</span>
+      </div>
+
+      <!-- Step 1: Start button -->
+      <button class="btn btn-primary" id="start-btn">
+        Start Camera
+      </button>
+
+      <!-- Step 2: Shows after camera starts + peer connects -->
+      <div id="peer-id-box" class="peer-id-box" hidden>
+        <span class="peer-id-label">Room Code — enter this on your PC</span>
+        <span class="peer-id-value" id="peer-id-value">—</span>
+      </div>
+
+      <p class="hint">Point your iPhone at the dartboard, then enter the room code on your PC.</p>
+    </div>
+
+    <!-- Live preview so you can see what's being streamed -->
+    <div class="video-wrapper" style="max-width: 380px;">
+      <video
+        id="preview"
+        autoplay
+        playsinline
+        muted
+        style="width:100%; height:100%; object-fit:cover;"
+      ></video>
+    </div>
+
+  </main>
+
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/camera.js"></script>
+</body>
+</html>

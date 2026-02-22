@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DartCam</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .ring {
+      position: fixed;
+      border-radius: 50%;
+      border: 1px solid rgba(230, 57, 70, 0.06);
+      pointer-events: none;
+    }
+    .ring-1 { width: 400px; height: 400px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .ring-2 { width: 650px; height: 650px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .ring-3 { width: 900px; height: 900px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  </style>
+</head>
+<body>
+  <!-- decorative dartboard rings -->
+  <div class="ring ring-1"></div>
+  <div class="ring ring-2"></div>
+  <div class="ring ring-3"></div>
+
+  <main class="page">
+    <div class="logo">
+      <h1 class="logo-title">DART<span>CAM</span></h1>
+      <p class="logo-sub">Live camera · Point tracking</p>
+    </div>
+
+    <div class="role-grid">
+      <a href="camera.html" class="role-card">
+        <div class="role-card-icon">📱</div>
+        <div class="role-card-title">CAMERA</div>
+        <p class="role-card-desc">Open on your iPhone to broadcast the dartboard stream.</p>
+      </a>
+      <a href="viewer.html" class="role-card">
+        <div class="role-card-icon">🖥️</div>
+        <div class="role-card-title">VIEWER</div>
+        <p class="role-card-desc">Open on your PC to watch the live stream and track scores.</p>
+      </a>
+    </div>
+
+    <p class="hint">Both devices must be on the same WiFi for best performance.</p>
+  </main>
+</body>
+</html>
