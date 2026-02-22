@@ -40,9 +40,7 @@ let _inferEngine = null;
 let _workerId    = null;
 
 async function loadModel() {
-  // Dynamic import — if it fails the catch in setup() shows a message,
-  // but the dartboard and button handler are already active.
-  const { InferenceEngine } = await import('https://esm.sh/inferencejs');
+  // InferenceEngine is provided by the CDN script in viewer.html
   _inferEngine = new InferenceEngine();
   _workerId = await _inferEngine.startWorker(
     ROBOFLOW_MODEL, ROBOFLOW_VERSION, ROBOFLOW_PUBLISHABLE_KEY
