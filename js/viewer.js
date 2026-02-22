@@ -79,11 +79,14 @@ function connect() {
 }
 
 // ─── PeerJS requires the caller to send a stream too ──────────
-// We send a silent/blank stream as a workaround.
+// We send a 1×1 canvas video stream so the SDP offer includes m=video,
+// which allows the camera's real video track to flow back to the viewer.
 function createDummyStream() {
-  const ctx = new AudioContext();
-  const dst = ctx.createMediaStreamDestination();
-  return dst.stream;
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  canvas.getContext('2d').fillRect(0, 0, 1, 1);
+  return canvas.captureStream(1); // 1 fps tiny black frame
 }
 
 // ─── UI helpers ───────────────────────────────────────────────
