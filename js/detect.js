@@ -41,22 +41,22 @@ let _workerId    = null;
 
 async function loadModel() {
   // InferenceEngine is provided by the CDN script in viewer.html
-  _inferEngine = new InferenceEngine();
+  // The CDN bundle exposes it as window.inferencejs.InferenceEngine
+  _inferEngine = new inferencejs.InferenceEngine();
   _workerId = await _inferEngine.startWorker(
     ROBOFLOW_MODEL, ROBOFLOW_VERSION, ROBOFLOW_PUBLISHABLE_KEY
   );
 }
 
-// Run on-device inference; normalize bbox to center-x/y (matches REST API format)
+// Run on-device inference; bbox.x/y from inferencejs are already center coords
 async function detectDarts(frameCanvas) {
   const bmp = await createImageBitmap(frameCanvas);
   const raw = await _inferEngine.infer(_workerId, bmp);
-  // inferencejs bbox: { x, y } = top-left → convert to center coords
   return raw.map(p => ({
     class:      p.class,
     confidence: p.confidence,
-    x:          p.bbox.x + p.bbox.width  / 2,
-    y:          p.bbox.y + p.bbox.height / 2,
+    x:          p.bbox.x,
+    y:          p.bbox.y,
     width:      p.bbox.width,
     height:     p.bbox.height,
   }));
