@@ -59,10 +59,37 @@
       ></video>
     </div>
 
+    <!-- Detect button (shown once stream is active) -->
+    <div id="detect-wrap" class="detect-wrap" style="display:none;">
+      <button class="btn btn-primary" id="detect-btn">Darts erkennen</button>
+      <p class="hint" id="detect-status"></p>
+    </div>
+
+    <!-- Results (shown after a detection run) -->
+    <div id="results-section" class="results-section" style="display:none;">
+      <div class="results-grid">
+
+        <!-- Left: captured frame with bounding boxes -->
+        <div class="results-col">
+          <p class="card-title">Erkannter Frame</p>
+          <canvas id="frame-canvas" class="frame-canvas"></canvas>
+        </div>
+
+        <!-- Right: dartboard + score list -->
+        <div class="results-col">
+          <p class="card-title">Dartboard</p>
+          <canvas id="dartboard-canvas" class="dartboard-canvas" width="320" height="320"></canvas>
+          <div id="score-list" class="score-list"></div>
+        </div>
+
+      </div>
+    </div>
+
   </main>
 
   <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/detect.js"></script>
   <script src="js/viewer.js"></script>
 </body>
 </html>
