@@ -226,26 +226,29 @@ function renderScoreList(container, predictions) {
     </div>`;
 }
 
-// ─── initDetection() — called by viewer.js once the stream is live ───
-function initDetection(videoEl) {
-  const detectWrap     = document.getElementById('detect-wrap');
+// ─── Setup — runs immediately when the script loads ──────────────────
+(function setup() {
   const detectBtn      = document.getElementById('detect-btn');
   const detectStatus   = document.getElementById('detect-status');
   const resultsSection = document.getElementById('results-section');
   const frameCanvas    = document.getElementById('frame-canvas');
   const boardCanvas    = document.getElementById('dartboard-canvas');
   const scoreList      = document.getElementById('score-list');
-
-  // Show the detect button
-  detectWrap.style.display = '';
+  const video          = document.getElementById('stream');
 
   detectBtn.addEventListener('click', async () => {
+    // If no video stream is active, bail out early
+    if (!video.videoWidth) {
+      detectStatus.textContent = 'Kein Stream aktiv — zuerst verbinden.';
+      return;
+    }
+
     detectBtn.disabled       = true;
     detectStatus.textContent = 'Frame wird gesendet...';
     resultsSection.style.display = 'none';
 
     try {
-      const frame  = captureFrame(videoEl);
+      const frame  = captureFrame(video);
       const result = await detectDartsAPI(frame);
       const preds  = result.predictions || [];
 
@@ -266,4 +269,4 @@ function initDetection(videoEl) {
 
     detectBtn.disabled = false;
   });
-}
+}());
