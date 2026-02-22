@@ -1,7 +1,7 @@
 // ─── detect.js ─────────────────────────────────────────────────────
 // Roboflow Darts Detection: API call + dartboard visualization
 
-const ROBOFLOW_API_KEY = 'rf_DrUUV6Voq7PQZeRCjAHUGyskZsF3';
+const ROBOFLOW_API_KEY = '92FofRNR2Rq0Il8YrJXp';
 const ROBOFLOW_MODEL   = 'darts-gffwp/1';
 const ROBOFLOW_URL     =
   `https://serverless.roboflow.com/${ROBOFLOW_MODEL}` +
