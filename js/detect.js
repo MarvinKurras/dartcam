@@ -249,39 +249,41 @@ function renderScoreList(container, predictions) {
     </div>`;
 }
 
-// ─── Setup — runs when module loads ──────────────────────────────────
+// ─── Setup ───────────────────────────────────────────────────────────
 (function setup() {
-
-  drawDartboard(document.getElementById('dartboard-canvas'), []);
-
+  const boardCanvas    = document.getElementById('dartboard-canvas');
   const detectBtn      = document.getElementById('detect-btn');
   const detectStatus   = document.getElementById('detect-status');
   const resultsSection = document.getElementById('results-section');
   const frameCanvas    = document.getElementById('frame-canvas');
-  const boardCanvas    = document.getElementById('dartboard-canvas');
   const scoreList      = document.getElementById('score-list');
   const video          = document.getElementById('stream');
 
-  // Load model on startup; button stays disabled until ready
-  detectBtn.disabled       = true;
-  detectStatus.textContent = 'Modell wird geladen…';
-  loadModel()
-    .then(() => {
-      detectBtn.disabled       = false;
-      detectStatus.textContent = '';
-    })
-    .catch(err => {
-      detectStatus.textContent = `Modell-Ladefehler: ${err.message}`;
-      console.error('[detect] model load', err);
-    });
+  // Draw empty board immediately — no dependency on inferencejs
+  if (boardCanvas) drawDartboard(boardCanvas, []);
 
+  // Button stays ENABLED. Model loads on first click so the button always responds.
   detectBtn.addEventListener('click', async () => {
     if (!video.videoWidth) {
       detectStatus.textContent = 'Kein Stream aktiv — zuerst verbinden.';
       return;
     }
 
-    detectBtn.disabled       = true;
+    detectBtn.disabled = true;
+
+    // Load model on first click
+    if (!_workerId) {
+      detectStatus.textContent = 'Modell wird geladen…';
+      try {
+        await loadModel();
+      } catch (err) {
+        detectStatus.textContent = `Ladefehler: ${err.message}`;
+        console.error('[detect] model load', err);
+        detectBtn.disabled = false;
+        return;
+      }
+    }
+
     detectStatus.textContent = 'Frame wird analysiert…';
     resultsSection.style.display = 'none';
 
@@ -289,10 +291,9 @@ function renderScoreList(container, predictions) {
       const frame = captureFrame(video);
       const preds = await detectDarts(frame);
 
-      drawDetections(frameCanvas, preds, frame, null); // predictions in canvas pixel space
+      drawDetections(frameCanvas, preds, frame, null);
       drawDartboard(boardCanvas, preds);
       renderScoreList(scoreList, preds);
-
       resultsSection.style.display = '';
 
       const n = preds.length;
