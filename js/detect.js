@@ -4,13 +4,14 @@
 const ROBOFLOW_API_KEY = 'rf_DrUUV6Voq7PQZeRCjAHUGyskZsF3';
 const ROBOFLOW_MODEL   = 'darts-gffwp/1';
 const ROBOFLOW_URL     =
-  `https://detect.roboflow.com/${ROBOFLOW_MODEL}` +
-  `?api_key=${ROBOFLOW_API_KEY}&confidence=40&overlap=30`;
+  `https://serverless.roboflow.com/${ROBOFLOW_MODEL}` +
+  `?api_key=${ROBOFLOW_API_KEY}&confidence=50&overlap=50`;
 
 // Dartboard numbers clockwise from top (standard layout)
 const BOARD_NUMS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 
-// ─── Parse dart class name → { label, score, type } ────────────────
+// ─── Parse dart class name → { label, score, type, number } ─────────
+// darts-gffwp/1 returns classes like: "t19", "d16", "s5", "sb", "db"
 function parseScore(cls) {
   if (cls === 'db') return { label: 'Double Bull', score: 50, type: 'db' };
   if (cls === 'sb') return { label: 'Single Bull', score: 25, type: 'sb' };
@@ -231,7 +232,7 @@ function renderScoreList(container, predictions) {
 
 // ─── Setup — runs immediately when the script loads ──────────────────
 (function setup() {
-  // Draw empty dartboard right away
+
   drawDartboard(document.getElementById('dartboard-canvas'), []);
 
   const detectBtn      = document.getElementById('detect-btn');
